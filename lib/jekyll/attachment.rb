@@ -33,21 +33,11 @@ module Jekyll
       @to_liquid ||= Drops::AttachmentDrop.new(self)
     end
 
-    def url
-      @url ||= Jekyll::URL.new(
-        :template     => "/:categories/:year/:month/:day/",
-        :placeholders => Drops::UrlDrop.new(self)
-      ).to_s << name
-    end
-
-    def destination(dest)
-      @destination ||= {}
-      @destination[dest] ||= site.in_dest_dir(dest, Jekyll::URL.unescape_path(url))
-    end
-
     def write(dest)
-      dest_path = destination(dest)
+      # dest should be the directory the associated document is written to already
+      dest_path = File.join(dest, name)
       if File.exist?(dest_path)
+        Jekyll.logger.warn "Replacing file that already exists at:", dest_path
         FileUtils.rm(dest_path)
       else
         FileUtils.mkdir_p(File.dirname(dest_path))

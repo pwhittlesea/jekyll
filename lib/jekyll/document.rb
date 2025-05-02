@@ -276,11 +276,13 @@ module Jekyll
     # Returns nothing.
     def write(dest)
       path = destination(dest)
-      FileUtils.mkdir_p(File.dirname(path))
+      path_dir = File.dirname(path)
+      FileUtils.mkdir_p(path_dir)
       Jekyll.logger.debug "Writing:", path
       File.write(path, output, :mode => "wb")
 
-      attachments.each { |attch| attch.write(dest) }
+      # Write attachments to the same folder as the document
+      attachments.each { |attch| attch.write(path_dir) }
       trigger_hooks(:post_write)
     end
 
