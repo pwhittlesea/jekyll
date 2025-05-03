@@ -56,12 +56,61 @@ Feature: Post attachments
     And I have the following post with attachments inside movies directory:
       | title            | date       | content          | attachments          |
       | Avengers-Endgame | 2019-03-27 | I am inevitable! | pic120.png,cover.jpg |
+    And I have an "index.md" page with content:
+      """
+      <pre>
+      {% for post in site.posts -%}
+        {{ post.attachments | jsonify }}
+      {% endfor %}
+      </pre>
+      """
     When I run jekyll build
     Then I should get a zero exit status
     And the "_site/star-wars.html" file should exist
     And the "_site/avengers-endgame.html" file should exist
-    And the "_site/2009/03/27/cover.jpg" file should exist
+    And the "_site/cover.jpg" file should exist
     And the "_site/movies/avengers-endgame.html" file should exist
-    And the "_site/movies/2019/03/27/cover.jpg" file should exist
-    But the "_site/cover.jpg" file should not exist
-    And the "_site/movies/cover.jpg" file should not exist
+    And the "_site/movies/cover.jpg" file should exist
+    And I should see "\"path\":\"_posts/2009-03-27-star-wars/pic070.png\"" in "_site/index.html"
+    And I should see "\"url\":\"/pic070.png\"" in "_site/index.html"
+    And I should see "\"path\":\"movies/_posts/2019-03-27-avengers-endgame/pic120.png\"" in "_site/index.html"
+    And I should see "\"url\":\"/movies/pic120.png\"" in "_site/index.html"
+
+  Scenario: Attachments of posts in a site with a folder style permalink
+    Given I have a configuration file with "permalink" set to "/:categories/:title/"
+    And I have a _posts directory
+    And I have the following posts with attachments:
+      | title           | date       | content         | attachments          |
+      | The Mandalorian | 2019-04-17 | This is the way | pic070.png,cover.jpg |
+    And I have a shows directory
+    And I have the following post with attachments inside shows directory:
+      | title | date       | content                | attachments          |
+      | Andor | 2019-03-27 | Never more than twelve | pic120.png,cover.jpg |
+    And I have an "index.md" page with content:
+      """
+      <pre>
+      {% for post in site.posts -%}
+        {{ post.attachments | jsonify }}
+      {% endfor %}
+      </pre>
+      """
+    When I run jekyll build
+    Then I should get a zero exit status
+    And the "_site/the-mandalorian/index.html" file should exist
+    And the "_site/the-mandalorian/cover.jpg" file should exist
+    And the "_site/shows/andor/index.html" file should exist
+    And the "_site/shows/andor/cover.jpg" file should exist
+    And I should see "\"path\":\"_posts/2019-04-17-the-mandalorian/pic070.png\"" in "_site/index.html"
+    And I should see "\"url\":\"/the-mandalorian/pic070.png\"" in "_site/index.html"
+    And I should see "\"path\":\"shows/_posts/2019-03-27-andor/pic120.png\"" in "_site/index.html"
+    And I should see "\"url\":\"/shows/andor/pic120.png\"" in "_site/index.html"
+
+  Scenario: Two attachments occupy the same path
+    Given I have a _posts directory
+    And I have the following posts with attachments:
+      | title           | date       | content                | attachments          |
+      | The Mandalorian | 2019-03-27 | This is the way        | cover.jpg |
+      | Andor           | 2019-03-27 | Never more than twelve | cover.jpg |
+    When I run jekyll build
+    Then I should get a non-zero exit-status
+    And I should see "Attachment '_posts/2019-03-27-the-mandalorian/cover.jpg' has the same path as an attachment from another post" in the build output
